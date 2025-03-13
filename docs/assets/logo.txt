@@ -1,0 +1,7 @@
+# Consilium Logo Placeholder
+
+This is a placeholder for the project logo. 
+
+In a real implementation, this would be replaced with an actual logo image file (PNG, SVG, etc.).
+
+For the Consilium project, consider creating a logo that represents the concept of a "council" of AI agents working together, perhaps with elements suggesting productivity, intelligence, and organization. 
