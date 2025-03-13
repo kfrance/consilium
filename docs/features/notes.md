@@ -2,7 +2,7 @@
 
 ## Overview
 
-Note management is a core feature of Consilium, enabling users to capture and organize their thoughts, information, and knowledge. Powered by BlockNotes editor, the note system is designed to be both flexible and powerful.
+Note management is a core feature of Consilium, enabling users to capture and organize their thoughts, information, and knowledge. Powered by BlockNotes editor, the note system is designed to be both flexible and powerful, with integrated task management capabilities.
 
 ## Key Features
 
@@ -12,6 +12,7 @@ Note management is a core feature of Consilium, enabling users to capture and or
 - **Rich Formatting**: Support for headings, lists, code blocks, quotes, etc.
 - **Markdown Support**: Edit in markdown or rich text mode
 - **Media Embedding**: Support for images, videos, and other media types
+- **Task Blocks**: Specialized blocks for creating and managing tasks within notes
 
 ### Organization
 
@@ -20,6 +21,7 @@ Note management is a core feature of Consilium, enabling users to capture and or
 - **Linking**: Create bidirectional links between notes for a personal knowledge graph
 - **Search**: Powerful search functionality across all notes
 - **RAG-Powered Discovery**: AI helps surface relevant notes based on content and context
+- **Pin System**: Pin important notes for quick access
 
 ### AI-Enhanced Capabilities
 
@@ -44,7 +46,7 @@ Note management is a core feature of Consilium, enabling users to capture and or
 Note {
   id: UUID
   title: String
-  content: JSON (BlockNotes format)
+  content: JSON (BlockNotes format, including task blocks)
   created_at: Timestamp
   updated_at: Timestamp
   user_id: UUID
@@ -69,20 +71,24 @@ Tag {
 - **Local Cache**: DexieJS (IndexedDB wrapper) for offline access
 - **Sync Mechanism**: Bi-directional sync with conflict resolution
 - **Vector Embeddings**: Note content is embedded for semantic search and RAG
+- **Task Indexing**: Task blocks are indexed separately for efficient aggregation
 
 ### BlockNotes Integration
 
 - **Custom Extensions**: Extending BlockNotes with Consilium-specific blocks
+- **Task Block Type**: Specialized block type for tasks with interactive elements
 - **Collaboration**: Future support for real-time collaboration
 - **Version History**: Track changes and revert to previous versions
 
-## Todo Integration
+## Integrated Task Management
 
-Notes can contain embedded todo items with the following properties:
+Tasks in Consilium are implemented as specialized blocks within notes:
 
-- **Inline Tasks**: Create tasks directly within notes
-- **Task Extraction**: Automatically identify and extract tasks from notes
-- **Bi-directional Linking**: Changes to tasks in the todo system reflect in notes
+- **Task Blocks**: Create interactive task blocks directly within notes
+- **Rich Metadata**: Each task block contains status, due date, priority, etc.
+- **Dynamic Aggregation**: Task blocks from all notes are aggregated into task-specific views
+- **Bidirectional Syncing**: Changes to task blocks sync between notes and task views
+- **Context Preservation**: Tasks always maintain their context within the source note
 
 ## User Experience
 
@@ -101,12 +107,16 @@ Notes can contain embedded todo items with the following properties:
 - **Semantic Search**: Find notes with similar meaning even with different wording
 - **Recently Accessed**: Quick access to recently viewed or edited notes
 - **AI-Suggested Related Notes**: Contextually relevant notes suggested by the AI
+- **Pinned Notes**: Quick access to frequently used notes
+
+### Working with Tasks in Notes
+
+- **Inline Creation**: Create tasks directly within notes while writing
+- **Interactive Elements**: Check off tasks, set due dates, and update status directly in notes
+- **Task Extraction**: View aggregated tasks across all notes in dedicated task views
+- **Status Synchronization**: Task status updates in either notes or task views are bidirectionally synced
 
 ### Editing Experience
-
-- **Distraction-Free Mode**: Focus mode for writing without UI clutter
-- **Split View**: Edit and preview simultaneously
-- **Templates**: Pre-defined templates for common note types
 - **Backlinks Panel**: See which notes link to the current note
 
 ### Mobile Experience
@@ -119,13 +129,5 @@ Notes can contain embedded todo items with the following properties:
 
 - **Planning**: Notes can be referenced in planning sessions
 - **RAG System**: Notes content is indexed for retrieval-augmented generation
-- **Export Options**: Markdown, PDF, HTML for sharing
-- **Calendar Integration**: Link notes to calendar events
-
-## Future Enhancements
-
 - **Handwriting Recognition**: Improved OCR for handwritten notes
-- **AI-Generated Visualizations**: Create diagrams and charts from text descriptions
 - **Cross-Device Sync**: Seamless experience across all user devices
-- **Advanced Collaboration**: Share and co-edit notes with other users
-- **Graph Visualization**: Visual representation of note connections and relationships 

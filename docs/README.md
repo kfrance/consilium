@@ -17,6 +17,7 @@ Welcome to the Consilium documentation. This repository contains comprehensive d
 - [Planning & Goals](features/planning.md) - Goal setting and planning capabilities
 - [Tasks](features/tasks.md) - Task management and organization
 - [RAG (Document Intelligence)](features/rag.md) - Retrieval-augmented generation capabilities
+- [Chat Commands](features/chat-commands.md) - Slash commands for interacting with the system
 
 ### Technical Details
 
@@ -24,6 +25,7 @@ Welcome to the Consilium documentation. This repository contains comprehensive d
 - [Backend](technical/backend.md) - Backend services and API design
 - [Storage](technical/storage.md) - Data storage design and implementation
 - [AI Integration](technical/ai-integration.md) - AI model integration and agent implementation
+- [Agent Tools](technical/agent-tools.md) - Tools available to AI agents for system interaction
 - [Development Setup](technical/development.md) - Setting up the development environment
 - [Deployment](technical/deployment.md) - Deployment architecture and procedures
 - [UI/UX Design](technical/ui-design.md) - User interface and experience design
@@ -45,6 +47,7 @@ If you're new to the Consilium project, we recommend starting with the following
 1. [System Overview](architecture/system-overview.md) for a high-level understanding
 2. [Development Setup](technical/development.md) to set up your development environment
 3. [UI/UX Design](technical/ui-design.md) to understand the user experience design
+4. [Chat Commands](features/chat-commands.md) to learn how to interact with the system
 
 ## Contributing to Documentation
 

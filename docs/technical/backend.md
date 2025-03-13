@@ -69,6 +69,10 @@ The Consilium backend is built using FastAPI, a modern, high-performance Python 
 │   ┌─────────────┐  ┌─────────────┐  ┌───────────┐  │
 │   │ Plan Service│  │ Chat Service│  │Auth Service│  │
 │   └─────────────┘  └─────────────┘  └───────────┘  │
+│                 ┌───────────────┐                  │
+│                 │Task Indexing  │                  │
+│                 │   Service     │                  │
+│                 └───────────────┘                  │
 └────────────────────────┬───────────────────────────┘
                          │
                          ▼
@@ -78,9 +82,9 @@ The Consilium backend is built using FastAPI, a modern, high-performance Python 
 │   ┌─────────────┐  ┌─────────────┐  ┌───────────┐  │
 │   │ User Repo   │  │ Notes Repo  │  │ Task Repo │  │
 │   └─────────────┘  └─────────────┘  └───────────┘  │
-│   ┌─────────────┐  ┌─────────────┐  ┌───────────┐  │
-│   │ Plan Repo   │  │  Chat Repo  │  │ Auth Repo │  │
-│   └─────────────┘  └─────────────┘  └───────────┘  │
+│   ┌─────────────┐  ┌─────────────┐                 │
+│   │ Plan Repo   │  │  Chat Repo  │                 │
+│   └─────────────┘  └─────────────┘                 │
 └────────────────────────┬───────────────────────────┘
                          │
                          ▼
@@ -129,12 +133,28 @@ The Consilium backend is built using FastAPI, a modern, high-performance Python 
 │  └─────────────────┘  │                │
 │  ┌─────────────────┐  │                │
 │  │ Anthropic Client│  │                │
-│  └─────────────────┘  │   ┌────────────┴──────────┐
-│  ┌─────────────────┐  │   │                       │
+│  └─────────────────┘  │                │
+│  ┌─────────────────┐  │   ┌────────────┴──────────┐
 │  │   xAI Client    │──┼───│    RAG System         │
 │  └─────────────────┘  │   │                       │
 │  ┌─────────────────┐  │   └───────────────────────┘
 │  │ OpenRouter Client│  │
+│  └─────────────────┘  │
+└───────────┬───────────┘
+            │
+            ▼
+┌───────────────────────┐
+│ External Integrations │
+│                       │
+│  ┌─────────────────┐  │
+│  │ Email Service   │  │
+│  └─────────────────┘  │
+│  ┌─────────────────┐  │
+│  │    Composio     │  │
+│  └─────────────────┘  │
+│  ┌─────────────────┐  │
+│  │ Direct API      │  │
+│  │ Integrations    │  │
 │  └─────────────────┘  │
 └───────────────────────┘
 ```
@@ -313,6 +333,8 @@ Messages
 - `PUT /api/tasks/{task_id}`: Update a task
 - `DELETE /api/tasks/{task_id}`: Delete a task
 - `PUT /api/tasks/{task_id}/status`: Update task status
+- `GET /api/tasks/external`: List tasks from external sources
+- `POST /api/tasks/sync`: Manually trigger sync with external systems
 
 ### Planning
 
@@ -340,6 +362,14 @@ Messages
 - `POST /api/ai/transcribe`: Transcribe image to text
 - `POST /api/ai/rag/query`: Query the RAG system
 - `POST /api/ai/documents/process`: Process a document for RAG
+
+### External Integrations
+
+- `GET /api/external/providers`: List available external providers
+- `POST /api/external/connect/{provider}`: Connect to external provider
+- `DELETE /api/external/disconnect/{provider}`: Disconnect from provider
+- `GET /api/external/status/{provider}`: Get connection status
+- `POST /api/external/sync/{provider}`: Force sync with provider
 
 ## Authentication and Security
 
@@ -397,4 +427,152 @@ Messages
 - **Microservices**: Breaking down into domain-specific services as the application grows
 - **Kubernetes**: For more advanced container orchestration
 - **Event-Driven Architecture**: Using message queues for async processing
-- **Custom Vector Database**: For improved RAG performance and cost efficiency 
+- **Custom Vector Database**: For improved RAG performance and cost efficiency
+
+## Service Implementation
+
+### Notes Service
+
+The Notes Service manages the creation, retrieval, updating, and deletion of notes:
+
+- **CRUD Operations**: Basic note management functions
+- **Content Parsing**: Processing and validating BlockNote JSON content
+- **Tag Management**: Handling note tagging and categorization
+- **Block Analysis**: Processing different block types in notes
+- **Task Block Processing**: Identifying and extracting task blocks for indexing
+- **Version Management**: Tracking note history and versions
+
+### Task Service
+
+The Task Service manages task blocks within notes and provides aggregated task views:
+
+- **Task Indexing**: Maintains an index of all task blocks across notes
+- **Task Aggregation**: Retrieves and aggregates tasks from multiple notes
+- **State Synchronization**: Ensures bidirectional syncing between task views and notes
+- **Filtering Capability**: Provides various filters for task views (due date, status, etc.)
+- **Task Block CRUD**: Manages task block operations within note content
+- **Parent Note Reference**: Maintains references to parent notes for each task
+- **External Task Handling**: Special handling for tasks from external sources
+
+### Task Indexing Service
+
+A specialized service that handles the indexing and retrieval of tasks from notes:
+
+- **Content Scanning**: Scans note content for task blocks
+- **Index Maintenance**: Maintains a separate index of tasks for efficient querying
+- **Real-time Updates**: Updates the index when notes or tasks change
+- **Context Preservation**: Maintains references to source notes for each task
+- **Query Optimization**: Provides optimized query patterns for task retrieval
+- **Bi-directional Updates**: Propagates changes from task views back to source notes
+
+### External Integration Services
+
+#### Email Integration Service
+
+Handles the scanning of emails and creation of tasks from email content:
+
+- **Email API Integration**: Connects to email providers via secure OAuth
+- **Email Scanning Agent**: AI agent that analyzes emails for task-like content
+- **Periodic Scanning**: Scheduled scanning of inbox for new task-relevant emails
+- **Email Reference Tracking**: Maintains references to source emails for tasks
+- **Reply Processing**: Handles email replies that relate to existing tasks
+
+#### External Application Service
+
+Manages integration with external task management systems:
+
+- **Composio Integration**: Uses Composio (https://composio.dev/) via CrewAI for API access
+- **ClickUp Sync**: Bidirectional synchronization with ClickUp tasks
+- **Task Transformation**: Converts external task formats to Consilium task blocks
+- **Status Propagation**: Ensures task status changes propagate to external systems
+- **Cleanup Service**: Removes completed external tasks from notes
+- **Extensible Framework**: Designed to easily add new integrations
+
+## Data Models
+
+### Note Model
+
+```python
+class Note(BaseModel):
+    id: UUID
+    title: str
+    content: Dict[str, Any]  # BlockNote JSON structure
+    created_at: datetime
+    updated_at: datetime
+    user_id: UUID
+    tags: List[UUID] = []
+    linked_notes: List[UUID] = []
+    is_pinned: bool = False
+    is_archived: bool = False
+    metadata: Dict[str, Any] = {}
+
+    class Config:
+        orm_mode = True
+```
+
+### Task Index Model
+
+```python
+class TaskIndex(BaseModel):
+    id: UUID
+    note_id: UUID  # Reference to parent note
+    block_id: str  # Reference to specific block in note
+    title: str
+    description: str = ""
+    status: TaskStatus
+    due_date: Optional[date] = None
+    due_time: Optional[time] = None
+    priority: TaskPriority
+    created_at: datetime
+    updated_at: datetime
+    user_id: UUID
+    parent_task_id: Optional[UUID] = None
+    source: TaskSource = TaskSource.DIRECT
+    source_reference: Optional[str] = None  # Reference ID in source system
+    metadata: Dict[str, Any] = {}
+
+    class Config:
+        orm_mode = True
+
+class TaskStatus(str, Enum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    DEFERRED = "deferred"
+
+class TaskPriority(str, Enum):
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+class TaskSource(str, Enum):
+    DIRECT = "direct"
+    NOTE = "note"
+    PLANNING = "planning"
+    CHAT = "chat"
+    EMAIL = "email"
+    CLICKUP = "clickup"
+    EXTERNAL = "external"
+```
+
+### External Reference Model
+
+```python
+class ExternalTaskReference(BaseModel):
+    id: UUID
+    task_id: UUID  # Reference to TaskIndex
+    system: str  # "email", "clickup", etc.
+    external_id: str  # ID in external system
+    system_url: Optional[str] = None  # URL to external system if applicable
+    last_synced: datetime
+    sync_status: SyncStatus
+    metadata: Dict[str, Any] = {}
+
+    class Config:
+        orm_mode = True
+
+class SyncStatus(str, Enum):
+    SYNCED = "synced"
+    PENDING = "pending"
+    ERROR = "error"
+``` 
