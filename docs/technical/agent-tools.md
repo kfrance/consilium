@@ -32,6 +32,15 @@ These tools allow agents to work with tasks.
 | `taskUpdate` | Updates an existing task | Task Agent |
 | `taskComplete` | Marks a task as completed | Task Agent |
 | `taskSearch` | Searches for tasks based on various criteria | Task Agent, Planning Agent |
+| `reminderCreate` | Creates a reminder (standalone or attached to a task) | Reminder Agent, Task Agent |
+
+### System Tools
+
+These tools provide core system functionality.
+
+| Tool Name | Description | Used By |
+|-----------|-------------|---------|
+| `eventScheduler` | Schedules and manages time-based events | Reminder Agent |
 
 ### External Integration Tools
 
@@ -63,7 +72,6 @@ These tools provide various utility functions.
 | Tool Name | Description | Used By |
 |-----------|-------------|---------|
 | `webSearch` | Searches the web for information | Research Agent |
-| `systemCommand` | Executes a system command (restricted) | System Agent |
 | `fileReader` | Reads files from the user's storage | File Agent |
 | `imageGeneration` | Generates images based on descriptions | Creative Agent |
 
@@ -259,6 +267,220 @@ const emailReplyTool: Tool = {
     }
   },
   requiredPermissions: ['email:send']
+};
+
+const reminderCreateTool: Tool = {
+  name: 'reminderCreate',
+  description: 'Creates a reminder for a future time, optionally attached to a task',
+  parameters: [
+    {
+      name: 'title',
+      description: 'The title of the reminder',
+      type: 'string',
+      required: true
+    },
+    {
+      name: 'description',
+      description: 'The description or content of the reminder',
+      type: 'string',
+      required: false
+    },
+    {
+      name: 'timeExpression',
+      description: 'When the reminder should trigger, expressed in natural language (e.g., "tomorrow at 3pm", "next Monday", "in 2 hours")',
+      type: 'string',
+      required: true
+    },
+    {
+      name: 'taskId',
+      description: 'Optional ID of a task to attach this reminder to',
+      type: 'string',
+      required: false
+    }
+  ],
+  execute: async (params, context) => {
+    try {
+      const { title, description = "", timeExpression, taskId } = params;
+      
+      // Parse natural language time expression
+      const parsedTime = await timeParsingService.parseTimeExpression(timeExpression, context.user.timezone);
+      
+      if (!parsedTime.success) {
+        return {
+          success: false,
+          error: `Could not understand the time expression: "${timeExpression}". Please try a different phrase like "tomorrow at 3pm" or "next Monday morning".`
+        };
+      }
+      
+      // If taskId is provided, verify the task exists
+      if (taskId) {
+        const task = await taskService.getTask(taskId);
+        if (!task) {
+          return {
+            success: false,
+            error: `Task with ID ${taskId} not found`
+          };
+        }
+      }
+      
+      // Create the reminder
+      const reminder = await reminderService.createReminder({
+        title,
+        description,
+        trigger_time: parsedTime.triggerTime,
+        recurring_pattern: parsedTime.recurringPattern,
+        natural_language_expression: timeExpression,
+        task_id: taskId || null,
+        user_id: context.user.id
+      });
+      
+      return {
+        success: true,
+        data: {
+          reminderId: reminder.id,
+          title: reminder.title,
+          triggerTime: reminder.trigger_time,
+          formattedTime: parsedTime.formattedTime,
+          isRecurring: !!parsedTime.recurringPattern,
+          recurrenceDescription: parsedTime.recurrenceDescription,
+          isTaskReminder: !!taskId
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  },
+  requiredPermissions: ['reminders:create']
+};
+
+const eventSchedulerTool: Tool = {
+  name: 'eventScheduler',
+  description: 'Schedules, manages, and triggers time-based events using a background scheduler',
+  parameters: [
+    {
+      name: 'action',
+      description: 'Action to perform: schedule, cancel, update, list',
+      type: 'string',
+      required: true,
+      enum: ['schedule', 'cancel', 'update', 'list']
+    },
+    {
+      name: 'eventData',
+      description: 'Data for the event (required for schedule/update actions)',
+      type: 'object',
+      required: false
+    },
+    {
+      name: 'eventId',
+      description: 'ID of event to cancel or update',
+      type: 'string',
+      required: false
+    }
+  ],
+  execute: async (params, context) => {
+    try {
+      const { action, eventData, eventId, filters } = params;
+      
+      switch (action) {
+        case 'schedule':
+          if (!eventData) {
+            return {
+              success: false,
+              error: 'Event data is required for scheduling'
+            };
+          }
+          
+          // Validate required event data
+          if (!eventData.triggerTime || !eventData.type || !eventData.agentToTrigger) {
+            return {
+              success: false,
+              error: 'Event data must include triggerTime, type, and agentToTrigger'
+            };
+          }
+          
+          // Schedule the event using APScheduler
+          const scheduledEvent = await eventSchedulerService.scheduleEvent({
+            ...eventData,
+            userId: context.user.id
+          });
+          
+          return {
+            success: true,
+            data: {
+              eventId: scheduledEvent.id,
+              scheduledTime: scheduledEvent.triggerTime,
+              isRecurring: !!scheduledEvent.recurringPattern
+            }
+          };
+          
+        case 'cancel':
+          if (!eventId) {
+            return {
+              success: false,
+              error: 'Event ID is required for cancellation'
+            };
+          }
+          
+          // Cancel the event
+          const cancelResult = await eventSchedulerService.cancelEvent(eventId, context.user.id);
+          
+          return {
+            success: cancelResult,
+            data: {
+              eventId,
+              canceled: cancelResult
+            }
+          };
+          
+        case 'update':
+          if (!eventId || !eventData) {
+            return {
+              success: false,
+              error: 'Both event ID and event data are required for updating'
+            };
+          }
+          
+          // Update the event
+          const updatedEvent = await eventSchedulerService.updateEvent(eventId, eventData, context.user.id);
+          
+          return {
+            success: true,
+            data: {
+              eventId: updatedEvent.id,
+              scheduledTime: updatedEvent.triggerTime,
+              isRecurring: !!updatedEvent.recurringPattern
+            }
+          };
+          
+        case 'list':
+          // List events with optional filters
+          const events = await eventSchedulerService.listEvents(context.user.id, filters || {});
+          
+          return {
+            success: true,
+            data: {
+              events,
+              count: events.length
+            }
+          };
+          
+        default:
+          return {
+            success: false,
+            error: `Unknown action: ${action}`
+          };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  },
+  requiredPermissions: ['events:manage']
 };
 
 const webScrapeTool: Tool = {

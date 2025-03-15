@@ -38,9 +38,12 @@ Welcome to the Consilium documentation. This repository contains comprehensive d
 
 - [External Services](integrations/external-services.md) - Integration with third-party services
 
-### Project Management
+## Project Documentation
 
-- [Project Roadmap](project/roadmap.md) - Development phases and milestones
+### Project Overview
+- [Project Vision](project/vision.md) - Core vision and mission
+- [Architecture Overview](project/architecture-overview.md) - High-level system design
+- [Development Guidelines](project/development-guidelines.md) - Coding standards and practices
 
 ## Getting Started
 

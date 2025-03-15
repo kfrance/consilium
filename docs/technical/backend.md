@@ -556,6 +556,29 @@ class TaskSource(str, Enum):
     EXTERNAL = "external"
 ```
 
+### Reminder Model
+
+```python
+class Reminder(BaseModel):
+    id: UUID
+    title: str
+    description: str = ""
+    trigger_time: datetime
+    task_id: Optional[UUID] = None  # Optional reference to a task
+    recurring_pattern: Optional[str] = None  # Cron-like pattern for recurring reminders
+    last_triggered: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    user_id: UUID
+    is_active: bool = True
+    is_acknowledged: bool = False
+    notification_sent: bool = False
+    metadata: Dict[str, Any] = {}
+
+    class Config:
+        orm_mode = True
+```
+
 ### External Reference Model
 
 ```python
@@ -576,4 +599,221 @@ class SyncStatus(str, Enum):
     SYNCED = "synced"
     PENDING = "pending"
     ERROR = "error"
+```
+
+## Event Scheduler System
+
+The Event Scheduler system manages time-based events using APScheduler to handle scheduling and execution in the background.
+
+### Architecture
+
+```
+┌───────────────┐     ┌─────────────────────┐     ┌────────────────┐
+│ Reminder Agent│────►│ EventSchedulerTool  │────►│ APScheduler    │
+└───────────────┘     └─────────────────────┘     └────────────────┘
+        │                       │                         │
+        └───────────┬───────────┘                         │
+                    ▼                                     ▼
+          ┌─────────────────────┐                ┌────────────────┐
+          │  Reminder Database  │◄───────────────│ Event Triggers │
+          └─────────────────────┘                └────────────────┘
+                                                         │
+                                                         ▼
+                                                  ┌────────────────┐
+                                                  │ Agent Dispatch │
+                                                  └────────────────┘
+```
+
+The Event Scheduler uses SQLAlchemy as its job store, ensuring persistence across application restarts.
+
+### Event Scheduler Service
+
+```python
+class EventSchedulerService:
+    def __init__(self):
+        """Initialize the scheduler and load existing events"""
+        self.scheduler = BackgroundScheduler(
+            jobstores={'default': SQLAlchemyJobStore(url=config.DATABASE_URL)}
+        )
+        self.scheduler.start()
+        self._load_events_from_db()
+        
+    def _load_events_from_db(self):
+        """Load all active events from the database and schedule them"""
+        active_reminders = db.query(Reminder).filter(Reminder.is_active == True).all()
+        for reminder in active_reminders:
+            self._schedule_reminder(reminder)
+    
+    def schedule_event(self, event_data):
+        """Schedule a new event"""
+        # Create the event in the database (using the Reminder table)
+        reminder = Reminder(
+            title=event_data.get('title', 'Scheduled Event'),
+            description=event_data.get('description', ''),
+            trigger_time=event_data['triggerTime'],
+            recurring_pattern=event_data.get('recurringPattern'),
+            user_id=event_data['userId'],
+            task_id=event_data.get('entityId') if event_data.get('type') == 'task_reminder' else None,
+            metadata={
+                'event_type': event_data['type'],
+                'agent_to_trigger': event_data['agentToTrigger'],
+                'payload': event_data.get('payload', {})
+            }
+        )
+        db.add(reminder)
+        db.commit()
+        
+        # Schedule the event in APScheduler
+        self._schedule_reminder(reminder)
+        
+        return reminder
+    
+    def _schedule_reminder(self, reminder):
+        """Schedule a reminder in the APScheduler system"""
+        if reminder.recurring_pattern:
+            # Schedule recurring job
+            job = self.scheduler.add_job(
+                self._trigger_event,
+                'cron',
+                # Convert cron pattern to kwargs
+                **self._parse_cron_pattern(reminder.recurring_pattern),
+                id=str(reminder.id),
+                replace_existing=True,
+                args=[reminder.id]
+            )
+        else:
+            # Schedule one-time job
+            job = self.scheduler.add_job(
+                self._trigger_event,
+                'date',
+                run_date=reminder.trigger_time,
+                id=str(reminder.id),
+                replace_existing=True,
+                args=[reminder.id]
+            )
+        
+        return job
+    
+    def _trigger_event(self, reminder_id):
+        """Handle event triggering - dispatch directly to appropriate agent"""
+        reminder = db.query(Reminder).get(reminder_id)
+        if not reminder or not reminder.is_active:
+            return
+        
+        # Update the reminder's last_triggered time
+        reminder.last_triggered = datetime.now()
+        reminder.notification_sent = True
+        db.commit()
+        
+        # Get agent to dispatch to
+        agent_to_trigger = reminder.metadata.get('agent_to_trigger', 'ReminderAgent')
+        
+        # Dispatch directly to the target agent via agent system
+        agent_system.dispatch_event(
+            agent_name=agent_to_trigger,
+            event_type=reminder.metadata.get('event_type', 'reminder'),
+            payload={
+                'reminder_id': reminder_id,
+                'title': reminder.title,
+                'description': reminder.description,
+                'task_id': reminder.task_id,
+                'user_id': reminder.user_id,
+                'custom_payload': reminder.metadata.get('payload', {})
+            }
+        )
+    
+    def cancel_event(self, event_id, user_id):
+        """Cancel a scheduled event"""
+        reminder = db.query(Reminder).filter(
+            Reminder.id == event_id,
+            Reminder.user_id == user_id
+        ).first()
+        
+        if not reminder:
+            return False
+        
+        # Deactivate in database
+        reminder.is_active = False
+        db.commit()
+        
+        # Remove from scheduler
+        try:
+            self.scheduler.remove_job(str(event_id))
+        except JobLookupError:
+            # Job might not be in scheduler anymore
+            pass
+        
+        return True
+    
+    def update_event(self, event_id, event_data, user_id):
+        """Update a scheduled event"""
+        reminder = db.query(Reminder).filter(
+            Reminder.id == event_id,
+            Reminder.user_id == user_id
+        ).first()
+        
+        if not reminder:
+            raise ValueError(f"Event with ID {event_id} not found")
+        
+        # Update reminder fields
+        if 'title' in event_data:
+            reminder.title = event_data['title']
+        if 'description' in event_data:
+            reminder.description = event_data['description']
+        if 'triggerTime' in event_data:
+            reminder.trigger_time = event_data['triggerTime']
+        if 'recurringPattern' in event_data:
+            reminder.recurring_pattern = event_data['recurringPattern']
+        
+        # Update metadata fields
+        metadata = reminder.metadata or {}
+        if 'type' in event_data:
+            metadata['event_type'] = event_data['type']
+        if 'agentToTrigger' in event_data:
+            metadata['agent_to_trigger'] = event_data['agentToTrigger']
+        if 'payload' in event_data:
+            metadata['payload'] = event_data['payload']
+        
+        reminder.metadata = metadata
+        db.commit()
+        
+        # Reschedule in APScheduler
+        self._schedule_reminder(reminder)
+        
+        return reminder
+    
+    def list_events(self, user_id, filters=None):
+        """List events matching the filters"""
+        filters = filters or {}
+        query = db.query(Reminder).filter(Reminder.user_id == user_id)
+        
+        # Apply filters
+        if 'active' in filters:
+            query = query.filter(Reminder.is_active == filters['active'])
+        if 'eventType' in filters:
+            query = query.filter(Reminder.metadata['event_type'].astext == filters['eventType'])
+        if 'taskId' in filters:
+            query = query.filter(Reminder.task_id == filters['taskId'])
+        if 'from' in filters:
+            query = query.filter(Reminder.trigger_time >= filters['from'])
+        if 'to' in filters:
+            query = query.filter(Reminder.trigger_time <= filters['to'])
+        
+        return query.all()
+    
+    def _parse_cron_pattern(self, pattern):
+        """Parse a cron-like pattern into kwargs for APScheduler"""
+        # Implementation depends on your cron pattern format
+        # This is a simplified example
+        parts = pattern.split(' ')
+        if len(parts) == 5:
+            return {
+                'minute': parts[0],
+                'hour': parts[1],
+                'day': parts[2],
+                'month': parts[3],
+                'day_of_week': parts[4]
+            }
+        else:
+            raise ValueError(f"Invalid cron pattern: {pattern}")
 ``` 

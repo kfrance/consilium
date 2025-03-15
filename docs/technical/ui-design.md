@@ -328,6 +328,40 @@ Tasks in Consilium are implemented as specialized blocks within notes, which are
    - Source context is always preserved and accessible
    - Related tasks can be viewed by note source or other metadata
 
+### Task Reminder Flow
+
+1. **Adding a Reminder**:
+   - User opens a task in either the task view or within a note
+   - User clicks on the bell icon or "Add Reminder" button
+   - A reminder modal appears with a natural language input field
+   - User types when they want to be reminded using everyday language:
+     - "tomorrow at 3pm"
+     - "next Monday morning"
+     - "in 2 hours"
+     - "every weekday at 9am"
+   - The system parses the input and displays a confirmation of the interpreted time
+   - User confirms or adjusts by typing a new phrase
+   - The UI updates to show a bell icon with the reminder time on the task
+
+2. **Receiving Notifications**:
+   - At the specified time, a push notification appears
+   - The notification shows:
+     - Task title
+     - Action buttons: "View Task" and "Snooze"
+   - Clicking "View Task" opens the task directly
+   - Clicking "Snooze" offers predefined options (configurable in settings) like "30 minutes", "1 hour", "Tomorrow morning"
+
+3. **Managing Reminders**:
+   - User can view all reminders in the dedicated Reminders section
+   - Each reminder shows:
+     - Title
+     - Associated task (if any)
+     - Trigger time in natural language (e.g., "Tomorrow at 9 AM")
+     - Recurrence pattern in natural language (e.g., "Every Monday")
+   - Users can filter by:
+     - Task reminders vs. standalone reminders
+   - Users can edit reminder times using natural language phrases
+
 ### Planning Session Flow
 
 1. User initiates planning session (daily, weekly, etc.)

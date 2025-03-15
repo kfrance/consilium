@@ -12,7 +12,7 @@ The Task Management system in Consilium provides a centralized way to create, or
 - **Within Notes**: Tasks created as specialized blocks directly within notes
 - **Planning Sessions**: Tasks generated during planning workflows
 - **Chat Generation**: Tasks created through conversation with AI agents
-- **Email Integration**: Tasks identified and extracted from emails by an AI agent
+- **Email Integration**: Tasks created from emails by an AI agent
 - **External Applications**: Tasks imported from external applications like ClickUp
 
 ### Task Implementation
@@ -36,6 +36,7 @@ The Task Management system in Consilium provides a centralized way to create, or
 - **Size**: Numeric value for effort estimation (for planning and prioritization)
 - **Attachments**: Files, links, or references attached to tasks
 - **Notes**: Additional notes or context for tasks
+- **Reminders**: Notification triggers that can be attached to tasks
 
 ## User Interface
 
@@ -83,6 +84,23 @@ Category {
   color: String
   user_id: UUID
   parent_category_id: UUID (optional)
+}
+
+Reminder {
+  id: UUID
+  title: String
+  description: Text
+  trigger_time: Timestamp
+  task_id: UUID (optional, reference to associated task)
+  recurring_pattern: String (optional, cron-like pattern)
+  last_triggered: Timestamp (optional)
+  created_at: Timestamp
+  updated_at: Timestamp
+  user_id: UUID
+  is_active: Boolean
+  is_acknowledged: Boolean
+  notification_sent: Boolean
+  metadata: JSON
 }
 ```
 
@@ -263,6 +281,33 @@ ClickUp tasks represent the model for external application integration:
    - External tasks maintain their special behaviors in all locations
    - Email tasks can be replied to from any instance using `/email-reply`
    - ClickUp tasks are removed from all notes when completed
+
+### Task Reminders
+
+Users can attach reminders to tasks through the task interface:
+
+1. **Adding Reminders to Tasks**:
+   - From the task detail view, click the "Add Reminder" button
+   - Enter a natural language phrase describing when to be reminded (e.g., "tomorrow afternoon", "next Friday at 3pm", "in 2 hours")
+   - The system parses and confirms the interpreted time
+   - User can adjust by entering a new phrase if needed
+
+2. **Managing Task Reminders**:
+   - View all reminders associated with a task in the task detail view
+   - Edit reminder times using natural language phrases
+   - Delete reminders that are no longer needed
+
+3. **Notification Behavior**:
+   - Reminders trigger push notifications at the specified time
+   - Notifications include the task title and a direct link to the task
+   - For recurring reminders, each occurrence generates a separate notification
+   - Notifications are marked as acknowledged when the user views the task
+
+4. **Reminder Centralization**:
+   - All reminders (both task-attached and standalone) are managed in a central system
+   - Users can view all upcoming reminders in the reminders dashboard
+   - Filtering options allow viewing only task reminders or only standalone reminders
+   - The system presents reminders in natural language format (e.g., "Tomorrow at 9 AM")
 
 ## Future Enhancements
 

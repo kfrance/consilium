@@ -42,6 +42,7 @@ These agents provide specific functionality within the application:
 - **Todo Manager**: Handles task creation, organization, and tracking across the system
 - **Reflection Agent**: Guides user through reflection processes and analyzes progress
 - **Save Command Agent**: Processes `/save` commands to create notes from conversations (see [Chat Commands](../features/chat-commands.md))
+- **Reminder Agent**: Manages reminder creation and notifications; handles both standalone reminders and task-attached reminders
 
 ### Utility Agents
 
@@ -82,6 +83,45 @@ User can reply via `/email-reply @taskname` ──► Email Agent helps draft an
          │
          ▼
 Email is sent, task is updated with reply information
+```
+
+### Reminder Agent
+
+The Reminder Agent handles all reminder-related functionality within the system:
+
+- **Natural Language Processing**: Parses time expressions in everyday language (e.g., "tomorrow at 3pm", "next Monday")
+- **Reminder Creation**: Creates standalone reminders via `/remind` command and task-attached reminders via UI
+
+The Reminder Agent uses natural language processing to:
+1. Interpret time-based expressions in user's everyday language
+2. Convert expressions to precise timestamps
+3. Understand recurrence patterns (daily, weekly, etc.)
+
+The Reminder Agent works in conjunction with the Event Scheduler system:
+1. When a reminder is created, the Reminder Agent uses the EventScheduler tool to schedule the actual notification
+2. The EventScheduler uses APScheduler in the background to track and trigger events at the specified times
+3. When an event triggers, the EventScheduler dispatches directly to the target agent specified in the event data
+4. For reminder notifications, the target agent is typically the Reminder Agent, which delivers the notification
+
+**Reminder Workflow**:
+```
+User creates reminder via:
+   │
+   ├─► Chat command: `/remind call mom tomorrow at 6pm`
+   │         or
+   └─► Task UI: Click "Add Reminder" on task, enter "tomorrow at 6pm"
+            │
+            ▼
+Reminder Agent parses time expression ──► Creates reminder record in database
+            │
+            ▼
+Reminder Agent uses EventScheduler to register event ──► APScheduler tracks the event
+            │
+            ▼
+At trigger time, EventScheduler dispatches to the designated agent ──► User receives notification
+            │
+            ▼
+User can view, snooze (using predefined options), or mark as acknowledged
 ```
 
 ### ClickUp Agent
