@@ -41,14 +41,52 @@ These agents provide specific functionality within the application:
 - **Note Taker Agent**: Specialized in managing notes, organizing information, and knowledge retrieval
 - **Todo Manager**: Handles task creation, organization, and tracking across the system
 - **Reflection Agent**: Guides user through reflection processes and analyzes progress
+- **Save Command Agent**: Processes `/save` commands to create notes from conversations (see [Chat Commands](../features/chat-commands.md))
 
 ### Utility Agents
 
 These agents provide supporting functionality to enhance the overall system:
 
 - **RAG Agent**: Implements retrieval-augmented generation to provide context-aware responses using user documents
-- **Transcriber Agent**: Converts images of handwritten text to digital text
-- **Integrator Agent**: Connects with external services like ClickUp and email
+- **Email Agent**: Scans emails for task-like content and creates tasks; handles email replies
+- **ClickUp Agent**: Synchronizes tasks with ClickUp and other external services
+- **Integration Agent**: Connects with external services through Composio
+
+## Specialized Agents
+
+### Email Agent
+
+The Email Agent handles all email-related functionality within the system:
+
+- **Email Scanning**: Periodically scans the user's inbox for task-like content
+- **Task Creation**: Creates tasks from emails with appropriate metadata
+- **Reply Handling**: Composes and sends replies to email tasks via the `/email-reply` command
+- **Draft Assistance**: Helps users draft professional email responses
+- **Email Authentication**: Securely manages OAuth connection to email services
+
+The Email Agent uses natural language processing to:
+1. Identify emails that contain action items or requests
+2. Extract key information for task creation
+3. Understand user intent for composing replies
+4. Generate appropriate response content
+
+**Email Task Workflow**:
+```
+Email Agent scans inbox ──► Identifies actionable emails
+         │
+         ▼
+Creates task with email metadata ──► Task appears in task views
+         │
+         ▼
+User can reply via `/email-reply @taskname` ──► Email Agent helps draft and send reply
+         │
+         ▼
+Email is sent, task is updated with reply information
+```
+
+### ClickUp Agent
+
+// ... add similar details for the ClickUp Agent ...
 
 ## Multi-Provider Support
 
@@ -92,3 +130,22 @@ The agent system is designed to be extensible:
 - **Latency Challenges**: Complex multi-agent workflows may increase response time
 - **Context Limitations**: Each agent has limited context window with current LLM technology
 - **Consistency**: Ensuring consistent personality and information across agents 
+
+## Agent Capabilities
+
+Agents execute their functions through access to specialized tools. Each agent is granted access to specific tools based on their role and responsibilities. These tools allow agents to:
+
+- Create and manipulate data in the system
+- Access external services and APIs
+- Process and transform information
+- Take actions on behalf of the user
+
+For a detailed list of available tools and their implementations, see the [Agent Tools](../technical/agent-tools.md) documentation.
+
+## Command Processing
+
+Agents can be triggered through explicit chat commands (prefixed with `/`) that users type into the chat interface. These commands route to specific agents with the appropriate tools to fulfill the request.
+
+For example, when a user types `/save`, the request is routed to the Save Command Agent which has access to the note creation tools. The agent processes the command parameters and creates a note based on the conversation content.
+
+For more information about available commands, see the [Chat Commands](../features/chat-commands.md) documentation. 

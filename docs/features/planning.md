@@ -87,36 +87,23 @@ Below is an example of how agents might coordinate for daily planning:
 ```
 User: "I need to plan my Thursday. I'm feeling a bit anxious about how much I need to get done this week."
 
-Planner Agent: [Internal] "I'll gather relevant information from the calendar, task lists, and domain agents to create a plan."
+Planner Agent: [Internal thought process] The user needs help planning their day and has mentioned feeling anxious. I should gather relevant information from various tools and consult with domain agents.
 
-Planner Agent → Calendar Tool: "What events are scheduled for Thursday?"
+First, the Planner Agent retrieves calendar events for Thursday from the Calendar Tool, which returns a team standup meeting in the morning, a quarterly presentation to the leadership team in the afternoon, and a reminder to pick up dry cleaning after work.
 
-Calendar Tool → Planner Agent: "Thursday's calendar shows:
-- 8:30 AM: Team standup (30 min)
-- 2:00 PM - 3:30 PM: Quarterly presentation to leadership team
-- 5:00 PM: Reminder to pick up dry cleaning"
+Next, the Planner Agent requests all active tasks from the Task Tool, which returns both weekly planned tasks (including a high-priority task to finish presentation slides, a medium-priority task to review Q3 metrics for tomorrow's meeting, and a task to schedule 1:1s with team members) and general tasks (including sending a follow-up email to marketing, updating project documentation, and researching a new productivity tool).
 
-Planner Agent → Task Tool: "What tasks are currently on the user's lists that might be relevant for Thursday?"
+With this information gathered, the Planner Agent reaches out to domain-specific agents:
 
-Task Tool → Planner Agent: "From the weekly planning session:
-- Finish slides for quarterly presentation (High priority, Due: Wednesday)
-- Review Q3 metrics for leadership meeting (Medium priority, Due: Thursday)
-- Schedule 1:1s with team members (Medium priority, Due: Friday)
-
-From the general task list:
-- Send follow-up email to marketing about collaboration (Medium priority, No due date)
-- Update project documentation (Low priority, No due date)
-- Research new productivity tool (Low priority, No due date)"
-
-Planner Agent → Health Agent: "Based on the user's recent planning sessions, health goals, and their mention of feeling anxious, what would you recommend for Thursday considering they have a presentation at 2:00 PM?"
+Planner Agent → Health Agent: The Planner shares the user's anxiety, calendar events, and tasks, asking for health-related recommendations.
 
 Health Agent → Planner Agent: "From the user's last reflection on Monday, they noted feeling more focused after morning exercise. The user's health goals include 'exercise 3x weekly' which they're currently at 1/3 for this week. Given their anxiety, I'd suggest a morning workout before the team standup to help reduce stress. Also, consider recommending short breaks throughout the day and avoiding too much caffeine, which can increase anxiety."
 
-Planner Agent → Work Agent: "What preparation tasks might be needed for Thursday's presentation to the leadership team based on past planning patterns and current task list?"
+Planner Agent → Work Agent: The Planner shares the same context, asking for work-related prioritization and preparation recommendations.
 
-Work Agent → Planner Agent: "From last week's planning session, the user mentioned needing quiet time to review slides before presentations. I see the slides are due Wednesday, but they should still allocate time to review the Q3 metrics task before the presentation. In a reflection two weeks ago, they noted feeling rushed into their last presentation. Based on their work goal of 'improve presentation skills,' I'd recommend scheduling 45-60 minutes of preparation time before the presentation and blocking off some time afterward to document any action items."
+Work Agent → Planner Agent: "From last week's planning session, the user mentioned needing quiet time to review slides before presentations. I see the slides are due today, but they should still allocate time to review the Q3 metrics task before the presentation. In a reflection two weeks ago, they noted feeling rushed into their last presentation. Based on their work goal of 'improve presentation skills,' I'd recommend scheduling 45-60 minutes of preparation time before the presentation and blocking off some time afterward to document any action items."
 
-Planner Agent → Spiritual Agent: "Are there any spiritual practices the user typically incorporates on stressful days based on their reflections or saved preferences?"
+Planner Agent → Spiritual Agent: The Planner shares the same context, asking for spiritual practices that might help with anxiety.
 
 Spiritual Agent → Planner Agent: "In the stored memory from the /remember command, the user noted: 'I prefer a short meditation session before important meetings to calm my nerves.' There's also a spiritual goal about 'maintaining perspective during work stress.' Given their mentioned anxiety, a brief morning meditation and perhaps a few minutes of centering before the presentation would align with these patterns."
 
@@ -125,7 +112,7 @@ Planner Agent → User: "Here's a suggested plan for Thursday, taking into accou
 7:30-8:00 AM: Morning exercise (supports your weekly exercise goal, currently at 1/3 for the week, and helps reduce anxiety)
 8:00-8:15 AM: Brief meditation (aligns with your preference for centering on stressful days)
 8:30-9:00 AM: Team standup
-9:00-10:30 AM: Review Q3 metrics for your presentation (from your weekly task list)
+9:00-10:30 AM: Review Q3 metrics for your presentation (due tomorrow)
 10:30-10:45 AM: Short break
 10:45-12:00 PM: Send follow-up email to marketing and work on project documentation (from your general task list)
 12:00-1:00 PM: Lunch break (suggest eating away from your desk to reset)
@@ -133,14 +120,14 @@ Planner Agent → User: "Here's a suggested plan for Thursday, taking into accou
 1:45-2:00 PM: Quick centering break
 2:00-3:30 PM: Quarterly presentation to leadership team
 3:30-4:00 PM: Document action items from presentation while fresh in your mind
-4:00-5:00 PM: Begin scheduling 1:1s with team members (from your weekly task list)
-5:00 PM: Pick up dry cleaning (from your calendar)
+4:00-5:00 PM: Begin scheduling 1:1s with team members (due Friday)
+5:00 PM: Pick up dry cleaning
 
 This plan balances your scheduled events, priority tasks, and well-being needs. It addresses both your weekly planned tasks and some items from your general task list. Would you like to adjust anything?"
 
 User: "I won't have time for exercise in the morning tomorrow. What about an evening workout instead?"
 
-Planner Agent → Health Agent: "The user can't do morning exercise. Would an evening workout after the presentation be suitable based on their patterns, goals, and mentioned anxiety?"
+The Planner Agent then consults the Health Agent about this adjustment, sharing the user's feedback.
 
 Health Agent → Planner Agent: "While there's no specific preference noted about evening workouts in their records, an evening workout would still help them progress toward their weekly exercise goal. Given the presentation and their anxiety, a moderate activity in the evening could help release tension after the day. For anxiety management, suggest they still take a few short walking breaks during the day to reset."
 
@@ -148,16 +135,11 @@ Planner Agent → User: "I understand about the morning time constraint. Instead
 ```
 
 This example shows how:
-1. The Planner Agent checks both the calendar and task lists for relevant information
-2. Domain agents base their recommendations on realistic information sources:
-   - Recent planning sessions and reflections
-   - Explicitly stored user preferences (via /remember)
-   - Progress toward documented goals
-   - Current tasks from both weekly planning and general task lists
-   - The user's expressed emotional state (anxiety)
-3. Information is synthesized into a cohesive plan that respects the user's calendar and prioritizes tasks
-4. Feedback is directed to the appropriate agent for refinement
-5. Each recommendation connects to the user's documented goals, preferences, or current needs
+1. The Planner Agent gathers relevant information from calendar and task tools
+2. Domain agents analyze the context and offer specialized recommendations
+3. The plan synthesizes all available information into a balanced schedule
+4. Feedback is processed by consulting with the relevant domain agent
+5. The final plan incorporates both the user's constraints and the agents' expertise
 
 ### Agent Configuration
 
