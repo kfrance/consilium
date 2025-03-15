@@ -174,8 +174,7 @@ The agent system is composed of multiple specialized agents that cover different
 
 ### Core Agents
 
-- **Planner Agent**: Creates and manages plans at different time horizons
-- **Coordinator Agent**: Directs user requests to appropriate agents
+- **Planner Agent**: Creates and manages plans at different time horizons, coordinates between specialized agents, and synthesizes recommendations into cohesive plans
 - **Memory Agent**: Maintains user context and memory across sessions
 
 ### Feature Agents

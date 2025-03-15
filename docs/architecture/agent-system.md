@@ -20,8 +20,8 @@ Consilium employs a multi-agent AI architecture where specialized AI agents work
         ▼                 ▼                 ▼
 ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
 │ - Planner     │ │ - Note Taker  │ │ - RAG Agent   │
-│ - Coordinator │ │ - Todo Manager│ │ - Transcriber │
-│ - Memory      │ │ - Reflection  │ │ - Integrator  │
+│ - Memory      │ │ - Todo Manager│ │ - Transcriber │
+│               │ │ - Reflection  │ │ - Integrator  │
 └───────────────┘ └───────────────┘ └───────────────┘
 ```
 
@@ -31,8 +31,7 @@ Consilium employs a multi-agent AI architecture where specialized AI agents work
 
 These agents form the backbone of the system and manage the overall user experience:
 
-- **Planner Agent**: Helps create and manage hierarchical plans from 5-year goals down to daily tasks
-- **Coordinator Agent**: Directs user requests to appropriate specialized agents and synthesizes responses
+- **Planner Agent**: Helps create and manage hierarchical plans from 5-year goals down to daily tasks, coordinates between specialized agents, and synthesizes recommendations into cohesive plans
 - **Memory Agent**: Maintains user context and relevant information across sessions
 
 ### Feature Agents

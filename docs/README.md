@@ -24,6 +24,7 @@ Welcome to the Consilium documentation. This repository contains comprehensive d
 - [Backend](technical/backend.md) - Backend services and API design
 - [Storage](technical/storage.md) - Data storage design and implementation
 - [AI Integration](technical/ai-integration.md) - AI model integration and agent implementation
+- [Planning Agents Implementation](technical/planning-agents-implementation.md) - Technical details for implementing the multi-agent planning system
 - [Development Setup](technical/development.md) - Setting up the development environment
 - [Deployment](technical/deployment.md) - Deployment architecture and procedures
 - [UI/UX Design](technical/ui-design.md) - User interface and experience design
