@@ -124,6 +124,41 @@ Agent: Email sent successfully to Alice Johnson. The task has been updated to re
 **Implementation Details:**
 The command is handled by an Email Agent with access to the email reply tool, which connects to your email service to send replies. The agent can help draft professional responses based on your instructions. See [Agent Tools](../technical/agent-tools.md) for more information about the underlying implementation.
 
+### `/scrape <url> [options]`
+
+The `/scrape` command allows you to extract content from websites using Crawl4AI and add it to the current chat context.
+
+**Usage:**
+```
+/scrape https://example.com
+```
+
+**Behavior:**
+1. The system recognizes the `/scrape` command and routes it to the appropriate agent
+2. The agent sends the URL to the Crawl4AI service for processing
+3. Crawl4AI extracts content from the specified URL based on the options provided
+4. By default, the content is summarized to preserve context space
+5. The extracted content is added to the current chat context
+6. The conversation continues with the AI now having access to the scraped content
+
+**Parameters:**
+- `<url>`: Required URL to scrape. Must be a valid URL including the protocol (http:// or https://).
+- `[options]`: Optional parameters to customize the scraping behavior:
+  - `--depth=<number>`: How many levels of links to follow (default: 0)
+  - `--full`: Include full content instead of summary (may hit token limits)
+  - `--no-summary`: Same as --full, include full content instead of summary
+
+**Examples:**
+- `/scrape https://example.com` - Basic scrape of a single page with automatic summarization
+- `/scrape https://example.com/blog --depth=2` - Scrape the blog and follow links up to 2 levels deep
+- `/scrape https://example.com --full` - Scrape without summarizing (full content)
+
+**Token Limits:**
+The command will only add up to 100,000 tokens to the context (configurable in [Settings](../technical/settings.md)). If the content exceeds this limit, it will be truncated and a warning will be displayed to the user.
+
+**Implementation Details:**
+The command is handled by a Research Agent with access to the web scraping tool, which connects to the Crawl4AI service via API. Unlike the agent-facing tool, the command simply adds the content to the chat context without analyzing it or automatically saving it as a note. Agents can use the more powerful `webScrape` tool to perform additional operations on the scraped content.
+
 ## Command Discovery
 
 Users can discover available commands through:

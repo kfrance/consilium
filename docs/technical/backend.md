@@ -529,6 +529,7 @@ class TaskIndex(BaseModel):
     parent_task_id: Optional[UUID] = None
     source: TaskSource = TaskSource.DIRECT
     source_reference: Optional[str] = None  # Reference ID in source system
+    size: Optional[float] = None  # Numeric value for effort estimation
     metadata: Dict[str, Any] = {}
 
     class Config:

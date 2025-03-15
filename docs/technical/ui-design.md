@@ -271,13 +271,6 @@ Tasks in Consilium are implemented as specialized blocks within notes, which are
 - **Screen Reader Support**: Semantic HTML and ARIA attributes
 - **Keyboard Navigation**: Complete functionality without mouse
 
-### Accommodations
-
-- **Reduced Motion**: Option to minimize animations
-- **High Contrast Mode**: Enhanced visual distinction
-- **Text-to-Speech Integration**: Read content aloud
-- **Alternative Input Methods**: Support for voice, switches, etc.
-
 ## Mobile Experience
 
 ### Optimizations

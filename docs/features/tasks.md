@@ -33,6 +33,7 @@ The Task Management system in Consilium provides a centralized way to create, or
 - **Assignments**: Assign tasks to people (self or others)
 - **Recurrence**: Set up repeating tasks with flexible schedules
 - **Time Estimates**: Optional time estimates for tasks
+- **Size**: Numeric value for effort estimation (for planning and prioritization)
 - **Attachments**: Files, links, or references attached to tasks
 - **Notes**: Additional notes or context for tasks
 
@@ -41,26 +42,11 @@ The Task Management system in Consilium provides a centralized way to create, or
 ### Task Views
 
 - **Aggregated Task List**: Dynamic view that collects all task blocks across notes
-- **Today View**: Tasks due or scheduled for today
-- **Upcoming View**: Calendar-based view of upcoming tasks
-- **Context-Based Views**: Tasks organized by source note or related metadata
-- **Custom Views**: User-defined views with saved filters
 
 ### Interaction Models
 
 - **List View**: Traditional list-based task management
-- **Kanban View**: Drag-and-drop interface for visual task management
-- **Calendar View**: Time-based visualization of tasks
 - **Source Context View**: See tasks within their original notes
-
-## AI-Enhanced Features
-
-- **Smart Due Dates**: AI suggests realistic due dates based on workload
-- **Priority Recommendations**: Suggestions for task prioritization
-- **Task Breakdown**: Help breaking down complex tasks into manageable subtasks
-- **Similar Task Detection**: Identify duplicate or related tasks
-- **Task Summarization**: Generate summaries of task lists or projects
-- **Natural Language Processing**: Create tasks using natural language
 
 ## Technical Implementation
 
@@ -85,6 +71,7 @@ Task {
   source: Enum (direct, note, planning, chat, email, clickup, external)
   source_reference: String (reference ID in the source system if external)
   time_estimate: Integer (in minutes, optional)
+  size: Float (optional, numeric value for effort estimation)
   tags: String[] (array of tag IDs)
   recurrence: JSON (recurrence pattern, optional)
   metadata: JSON
@@ -206,6 +193,8 @@ ClickUp tasks represent the model for external application integration:
 - **Goal Alignment**: Associate tasks with goals at various levels
 - **Progress Tracking**: Track goal progress through task completion
 - **Planning Context**: Tasks maintain link to planning session context
+- **Effort Estimation**: Size field for tasks provides numeric effort estimation for planning and prioritization
+- **AI-Assisted Planning**: AI uses size values for tasks to suggest realistic task scheduling and workload management
 
 ### Chat Integration
 
@@ -284,4 +273,6 @@ ClickUp tasks represent the model for external application integration:
 - **Achievement System**: Gamification elements for task completion
 - **Expanded External Integrations**: Add support for Trello, Asana, Jira, and other task systems
 - **Email Task Extraction Rules**: User-defined rules for which emails create tasks
-- **Global Task Search**: Search across all task sources with unified results 
+- **Global Task Search**: Search across all task sources with unified results
+- **Size-Based Planning**: Enhanced planning tools that use task size for workload balancing
+- **Velocity Tracking**: Track completion rates of tasks by size to improve estimation

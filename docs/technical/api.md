@@ -317,6 +317,7 @@ Response:
       "updated_at": "2023-01-16T00:00:00Z",
       "user_id": "user_123",
       "category_id": "category_456",
+      "size": 5,
       "tags": ["tag_789"]
     }
   ],
@@ -352,6 +353,7 @@ Content-Type: application/json
   "priority": "medium",
   "due_date": "2023-03-01",
   "category_id": "category_456",
+  "size": 3,
   "tags": ["tag_789"]
 }
 ```
@@ -372,6 +374,7 @@ Content-Type: application/json
   "priority": "high",
   "due_date": "2023-03-10",
   "category_id": "category_456",
+  "size": 8,
   "tags": ["tag_789", "tag_101"]
 }
 ```

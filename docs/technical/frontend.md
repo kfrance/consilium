@@ -230,6 +230,7 @@ interface TaskBlockProps {
   status: TaskStatus;
   priority: TaskPriority;
   dueDate?: Date;
+  size?: number;  // Numeric value for effort estimation
   source: TaskSource;
   sourceReference?: string;
   sourceMetadata?: any;

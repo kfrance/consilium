@@ -42,6 +42,7 @@ These tools enable integration with external systems.
 | `emailScan` | Scans emails for task-like content | Email Agent |
 | `emailReply` | Composes and sends replies to emails | Email Agent |
 | `clickUpSync` | Synchronizes tasks with ClickUp | ClickUp Agent |
+| `webScrape` | Extracts and processes website content using Crawl4AI | Research Agent |
 | `composioTool` | Generic interface to Composio integrations | Integration Agent |
 
 ### Planning Tools
@@ -78,6 +79,9 @@ Chat commands in Consilium map to specific tools that agents use to fulfill the 
 | `/email-reply` | `emailReply` | `taskSearch` | Email Agent |
 | `/remind` | `reminderCreate` | `reminderSearch` | Reminder Agent |
 | `/plan` | `planningSession` | `goalCreate`, `taskCreate` | Planning Agent |
+| `/scrape` | `webScrape` | `noteCreate`, `webSearch` | Research Agent |
+
+**Note about `/scrape` command vs `webScrape` tool**: While the `/scrape` command uses the `webScrape` tool, the command implementation is simplified to only add content to the chat context. The full `webScrape` tool available to agents has additional capabilities including content analysis, metadata extraction, and automatic note creation that aren't directly exposed through the command interface.
 
 ## Tool Implementation
 
@@ -256,7 +260,214 @@ const emailReplyTool: Tool = {
   },
   requiredPermissions: ['email:send']
 };
-```
+
+const webScrapeTool: Tool = {
+  name: 'webScrape',
+  description: 'Extracts content from websites using Crawl4AI',
+  parameters: [
+    {
+      name: 'url',
+      description: 'The URL to scrape',
+      type: 'string',
+      required: true
+    },
+    {
+      name: 'depth',
+      description: 'How many levels of links to follow (default: 0)',
+      type: 'number',
+      required: false
+    },
+    {
+      name: 'summarize',
+      description: 'Whether to summarize the content (default: true)',
+      type: 'boolean',
+      required: false
+    },
+    {
+      name: 'summaryLength',
+      description: 'Target length for summary (brief, medium, detailed)',
+      type: 'string',
+      required: false,
+      enum: ['brief', 'medium', 'detailed']
+    },
+    {
+      name: 'maxTokens',
+      description: 'Maximum number of tokens to include (default: system setting)',
+      type: 'number',
+      required: false
+    },
+    {
+      name: 'saveAsNote',
+      description: 'Whether to save the scraped content as a note',
+      type: 'boolean',
+      required: false
+    },
+    {
+      name: 'noteTitle',
+      description: 'Title for the note if saving as note',
+      type: 'string',
+      required: false
+    },
+    {
+      name: 'filters',
+      description: 'Filters to apply when scraping (e.g., content types, date ranges)',
+      type: 'object',
+      required: false
+    },
+    {
+      name: 'analyze',
+      description: 'Whether to analyze the content and extract key information',
+      type: 'boolean',
+      required: false
+    },
+    {
+      name: 'analysisInstructions',
+      description: 'Specific instructions for content analysis',
+      type: 'string',
+      required: false
+    }
+  ],
+  execute: async (params, context) => {
+    try {
+      const { 
+        url, 
+        depth = 0, 
+        summarize = true,
+        summaryLength = 'medium',
+        maxTokens = context.user.settings.scraping.maxTokens || 100000,
+        saveAsNote = false, 
+        noteTitle, 
+        filters = {},
+        analyze = false,
+        analysisInstructions = ''
+      } = params;
+      
+      // Validate URL
+      if (!url.match(/^https?:\/\/.+/)) {
+        return {
+          success: false,
+          error: 'Invalid URL. URL must start with http:// or https://'
+        };
+      }
+      
+      // Call Crawl4AI service
+      const scrapeResult = await crawl4AIService.scrape({
+        url,
+        depth,
+        filters,
+        userId: context.user.id
+      });
+      
+      // Process the result
+      let processedContent = {
+        title: scrapeResult.title || url,
+        content: scrapeResult.content,
+        metadata: {
+          source: url,
+          scrapedAt: new Date(),
+          pageCount: scrapeResult.pageCount,
+          wordCount: scrapeResult.wordCount,
+          wasTruncated: false
+        }
+      };
+      
+      // Check if content exceeds token limit
+      const tokenCount = await tokenCountService.countTokens(processedContent.content);
+      if (tokenCount > maxTokens) {
+        processedContent.metadata.wasTruncated = true;
+        processedContent.metadata.originalTokenCount = tokenCount;
+        
+        if (summarize) {
+          // Summarize content instead of truncating
+          const summary = await contentSummaryService.summarize({
+            content: processedContent.content,
+            length: summaryLength,
+            maxTokens: maxTokens,
+            userId: context.user.id
+          });
+          
+          processedContent.content = summary;
+          processedContent.metadata.isSummary = true;
+          processedContent.metadata.summaryLength = summaryLength;
+        } else {
+          // Truncate content to fit token limit
+          processedContent.content = await tokenCountService.truncateToTokenLimit(
+            processedContent.content, 
+            maxTokens
+          );
+        }
+      } else if (summarize) {
+        // Summarize even if under token limit (if requested)
+        const summary = await contentSummaryService.summarize({
+          content: processedContent.content,
+          length: summaryLength,
+          userId: context.user.id
+        });
+        
+        processedContent.content = summary;
+        processedContent.metadata.isSummary = true;
+        processedContent.metadata.summaryLength = summaryLength;
+      }
+      
+      // Analyze content if requested
+      let analysis = null;
+      if (analyze) {
+        analysis = await contentAnalysisService.analyze({
+          content: processedContent.content,
+          instructions: analysisInstructions,
+          userId: context.user.id
+        });
+        
+        processedContent.metadata.analysis = analysis;
+      }
+      
+      // Save as note if requested
+      let noteId = null;
+      if (saveAsNote) {
+        const note = await noteService.createNote({
+          title: noteTitle || processedContent.title,
+          content: {
+            type: 'doc',
+            content: [
+              {
+                type: 'paragraph',
+                content: [
+                  {
+                    type: 'text',
+                    text: `Source: ${url}`
+                  }
+                ]
+              },
+              ...formatContentForBlockNote(processedContent.content)
+            ]
+          },
+          metadata: {
+            source: 'web_scrape',
+            originalUrl: url,
+            ...processedContent.metadata
+          },
+          userId: context.user.id
+        });
+        noteId = note.id;
+      }
+      
+      return {
+        success: true,
+        data: {
+          ...processedContent,
+          analysis,
+          noteId
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  },
+  requiredPermissions: ['web:scrape', 'notes:create']
+};
 
 ## Tool Access Control
 
