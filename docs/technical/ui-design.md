@@ -362,6 +362,37 @@ Tasks in Consilium are implemented as specialized blocks within notes, which are
      - Task reminders vs. standalone reminders
    - Users can edit reminder times using natural language phrases
 
+### Task Recurrence Flow
+
+1. **Setting Up Recurring Tasks**:
+   - When creating or editing a task, user clicks the recurrence icon
+   - A recurrence dialog appears with:
+     - Natural language input field (e.g., "every Monday", "first of each month")
+     - Visual confirmation of the interpreted pattern
+     - Advanced options expandable section with:
+       - End conditions (never, after X occurrences, on date)
+       - Instance creation behavior
+       - Visual calendar preview showing future occurrences
+   - System parses the input and displays a visual confirmation
+   - User can refine by adjusting the pattern or using advanced options
+   - The task receives a visual indicator showing it's recurring
+
+2. **Recurring Task Visualization**:
+   - Recurring tasks are marked with a distinct "repeat" icon
+   - Hovering over the icon shows the recurrence pattern in natural language
+   - In task lists, recurring tasks can be expanded to show upcoming instances
+   - Calendar views show all instances with visual grouping to indicate they're part of the same series
+   - Task detail view includes a timeline of past and future instances
+
+3. **Editing Recurrence**:
+   - User can edit the recurrence pattern from any task instance
+   - Changes can apply to:
+     - This and all future instances
+     - Only future instances
+     - Just this instance (breaks it from the series)
+   - Visual confirmation shows how the change will affect future instances
+   - Editing individual instances provides option to exempt them from the pattern
+
 ### Planning Session Flow
 
 1. User initiates planning session (daily, weekly, etc.)

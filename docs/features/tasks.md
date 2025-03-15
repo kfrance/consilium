@@ -32,6 +32,10 @@ The Task Management system in Consilium provides a centralized way to create, or
 - **Subtasks**: Hierarchical task breakdown
 - **Assignments**: Assign tasks to people (self or others)
 - **Recurrence**: Set up repeating tasks with flexible schedules
+  - Support for daily, weekly, monthly, and custom patterns
+  - Natural language input (e.g., "every Monday", "first of each month")
+  - Configurable end conditions (specific date, number of occurrences, or indefinite)
+  - Options for handling completion status of recurring instances
 - **Time Estimates**: Optional time estimates for tasks
 - **Size**: Numeric value for effort estimation (for planning and prioritization)
 - **Attachments**: Files, links, or references attached to tasks
@@ -74,7 +78,18 @@ Task {
   time_estimate: Integer (in minutes, optional)
   size: Float (optional, numeric value for effort estimation)
   tags: String[] (array of tag IDs)
-  recurrence: JSON (recurrence pattern, optional)
+  recurrence: JSON {
+    pattern: String (e.g., "daily", "weekly", "monthly", "custom")
+    frequency: Integer (e.g., every 2 weeks)
+    days_of_week: Integer[] (array of days, where 0=Sunday, 1=Monday, etc.)
+    day_of_month: Integer (1-31, for monthly patterns)
+    month_of_year: Integer (1-12, for yearly patterns)
+    end_type: String ("never", "after", "on_date")
+    end_after_occurrences: Integer (if end_type is "after")
+    end_date: Date (if end_type is "on_date")
+    skip_completed: Boolean (whether to skip creating the next instance when current one is completed)
+    create_next_on_completion: Boolean (whether to immediately create the next instance when current one is completed)
+  }
   metadata: JSON
 }
 
@@ -197,6 +212,96 @@ ClickUp tasks represent the model for external application integration:
 - **Completion Behavior**: When completed, they are marked as done in ClickUp and removed from all notes
 - **Synchronization**: All instances of a ClickUp task stay synchronized
 
+### Recurring Task Flow
+
+1. **Creating Recurring Tasks**:
+   - User creates a task and adds recurrence by clicking the recurrence icon
+   - User enters a natural language pattern (e.g., "every Monday at 9am", "first of the month")
+   - System displays interpreted recurrence pattern for confirmation
+   - User can customize advanced options like end conditions and instance creation behavior
+
+2. **Managing Recurring Task Instances**:
+   - When a task instance is completed, the next instance is generated based on the recurrence pattern
+   - Each instance has its own due date based on the pattern
+   - User can view all upcoming instances from the task detail view
+   - User can edit individual instances without affecting the pattern
+   - User can edit the recurrence pattern, affecting all future instances
+
+3. **Completion Behavior Options**:
+   - Standard: When a task is completed, it's marked complete and the next instance is generated
+   - Skip when completed: If a task is completed early, the next instance is skipped (useful for "as-needed" tasks)
+   - Create next on completion: Next instance is immediately created when current one is completed (useful for sequential tasks)
+
+4. **Recurrence Pattern Changes**:
+   - Changes to the pattern affect only future instances
+   - Users can choose to regenerate all future instances when changing a pattern
+   - Individual instances can be exempt from the recurrence pattern as needed
+   - Deleting a recurring task provides options to delete just that instance or all future instances
+
+5. **Visual Indicators**:
+   - Recurring tasks have distinct visual indicators showing their recurrence pattern
+   - Upcoming recurring task instances are visually grouped in task views
+   - Missed recurring tasks are highlighted for attention
+
+### Cross-Note Task Flow
+
+1. **Adding to Multiple Notes**: 
+   - User can add an existing task by using the @ symbol in the note editor which brings up a fuzzy search tool to find the task the user is looking for
+
+2. **Updating Synchronized Tasks**:
+   - User updates any instance of a task (status, due date, etc.)
+   - System automatically updates all instances of that task
+   - User receives visual confirmation that all instances were updated
+
+3. **Deleting Task Instances**:
+   - When deleting a task that exists in multiple notes only the one task instance is removed
+
+4. **Working with External Tasks**:
+   - External tasks maintain their special behaviors in all locations
+   - Email tasks can be replied to from any instance using `/email-reply`
+   - ClickUp tasks are removed from all notes when completed
+
+### Task Reminders
+
+Users can attach reminders to tasks through the task interface:
+
+1. **Adding Reminders to Tasks**:
+   - From the task detail view, click the "Add Reminder" button
+   - Enter a natural language phrase describing when to be reminded (e.g., "tomorrow afternoon", "next Friday at 3pm", "in 2 hours")
+   - The system parses and confirms the interpreted time
+   - User can adjust by entering a new phrase if needed
+
+2. **Managing Task Reminders**:
+   - View all reminders associated with a task in the task detail view
+   - Edit reminder times using natural language phrases
+   - Delete reminders that are no longer needed
+
+3. **Notification Behavior**:
+   - Reminders trigger push notifications at the specified time
+   - Notifications include the task title and a direct link to the task
+   - For recurring reminders, each occurrence generates a separate notification
+   - Notifications are marked as acknowledged when the user views the task
+
+4. **Reminder Centralization**:
+   - All reminders (both task-attached and standalone) are managed in a central system
+   - Users can view all upcoming reminders in the reminders dashboard
+   - Filtering options allow viewing only task reminders or only standalone reminders
+   - The system presents reminders in natural language format (e.g., "Tomorrow at 9 AM")
+
+## Future Enhancements
+
+- **Team Collaboration**: Shared task lists and assignments
+- **Dependency Tracking**: Set and track dependencies between tasks
+- **Recurrence Enhancement**:
+  - Custom recurrence rules using RRULE format
+- **Time Tracking**: Built-in time tracking for tasks
+- **Achievement System**: Gamification elements for task completion
+- **Expanded External Integrations**: Add support for Trello, Asana, Jira, and other task systems
+- **Email Task Extraction Rules**: User-defined rules for which emails create tasks
+- **Global Task Search**: Search across all task sources with unified results
+- **Size-Based Planning**: Enhanced planning tools that use task size for workload balancing
+- **Velocity Tracking**: Track completion rates of tasks by size to improve estimation
+
 ## Integration with Other Features
 
 ### Notes Integration
@@ -264,60 +369,33 @@ ClickUp tasks represent the model for external application integration:
    - When marked complete in Consilium, they're updated in ClickUp and removed from notes
    - First of many planned external integrations via agent workflows
 
-### Cross-Note Task Flow
+### Recurring Task Flow
 
-1. **Adding to Multiple Notes**: 
-   - User can add an existing task by using the @ symbol in the note editor which brings up a fuzzy search tool to find the task the user is looking for
+1. **Creating Recurring Tasks**:
+   - User creates a task and adds recurrence by clicking the recurrence icon
+   - User enters a natural language pattern (e.g., "every Monday at 9am", "first of the month")
+   - System displays interpreted recurrence pattern for confirmation
+   - User can customize advanced options like end conditions and instance creation behavior
 
-2. **Updating Synchronized Tasks**:
-   - User updates any instance of a task (status, due date, etc.)
-   - System automatically updates all instances of that task
-   - User receives visual confirmation that all instances were updated
+2. **Managing Recurring Task Instances**:
+   - When a task instance is completed, the next instance is generated based on the recurrence pattern
+   - Each instance has its own due date based on the pattern
+   - User can view all upcoming instances from the task detail view
+   - User can edit individual instances without affecting the pattern
+   - User can edit the recurrence pattern, affecting all future instances
 
-3. **Deleting Task Instances**:
-   - When deleting a task that exists in multiple notes only the one task instance is removed
+3. **Completion Behavior Options**:
+   - Standard: When a task is completed, it's marked complete and the next instance is generated
+   - Skip when completed: If a task is completed early, the next instance is skipped (useful for "as-needed" tasks)
+   - Create next on completion: Next instance is immediately created when current one is completed (useful for sequential tasks)
 
-4. **Working with External Tasks**:
-   - External tasks maintain their special behaviors in all locations
-   - Email tasks can be replied to from any instance using `/email-reply`
-   - ClickUp tasks are removed from all notes when completed
+4. **Recurrence Pattern Changes**:
+   - Changes to the pattern affect only future instances
+   - Users can choose to regenerate all future instances when changing a pattern
+   - Individual instances can be exempt from the recurrence pattern as needed
+   - Deleting a recurring task provides options to delete just that instance or all future instances
 
-### Task Reminders
-
-Users can attach reminders to tasks through the task interface:
-
-1. **Adding Reminders to Tasks**:
-   - From the task detail view, click the "Add Reminder" button
-   - Enter a natural language phrase describing when to be reminded (e.g., "tomorrow afternoon", "next Friday at 3pm", "in 2 hours")
-   - The system parses and confirms the interpreted time
-   - User can adjust by entering a new phrase if needed
-
-2. **Managing Task Reminders**:
-   - View all reminders associated with a task in the task detail view
-   - Edit reminder times using natural language phrases
-   - Delete reminders that are no longer needed
-
-3. **Notification Behavior**:
-   - Reminders trigger push notifications at the specified time
-   - Notifications include the task title and a direct link to the task
-   - For recurring reminders, each occurrence generates a separate notification
-   - Notifications are marked as acknowledged when the user views the task
-
-4. **Reminder Centralization**:
-   - All reminders (both task-attached and standalone) are managed in a central system
-   - Users can view all upcoming reminders in the reminders dashboard
-   - Filtering options allow viewing only task reminders or only standalone reminders
-   - The system presents reminders in natural language format (e.g., "Tomorrow at 9 AM")
-
-## Future Enhancements
-
-- **Team Collaboration**: Shared task lists and assignments
-- **Dependency Tracking**: Set and track dependencies between tasks
-- **Advanced Recurrence**: More sophisticated recurrence patterns
-- **Time Tracking**: Built-in time tracking for tasks
-- **Achievement System**: Gamification elements for task completion
-- **Expanded External Integrations**: Add support for Trello, Asana, Jira, and other task systems
-- **Email Task Extraction Rules**: User-defined rules for which emails create tasks
-- **Global Task Search**: Search across all task sources with unified results
-- **Size-Based Planning**: Enhanced planning tools that use task size for workload balancing
-- **Velocity Tracking**: Track completion rates of tasks by size to improve estimation
+5. **Visual Indicators**:
+   - Recurring tasks have distinct visual indicators showing their recurrence pattern
+   - Upcoming recurring task instances are visually grouped in task views
+   - Missed recurring tasks are highlighted for attention
